@@ -1,1 +1,1 @@
-#Parte de Histograma
+Parte de Histograma
