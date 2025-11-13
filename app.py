@@ -54,14 +54,16 @@ def mostrar_histograma():
     intervalos = ultimo_intervalos
     dados = tabela.dados
 
-    if tabela.tipo_dados == "Contínuos":
-        bins = [(i['limite_inferior'], i['limite_superior']) for i in intervalos]
-        freq = [i['frequencia'] for i in intervalos]
-        data_dict = {"type": "continuous", "bins": bins, "freq": freq, "n": len(dados)}
-    else:
-        valores = [i['ponto_medio'] for i in intervalos]
-        freq = [i['frequencia'] for i in intervalos]
-        data_dict = {"type": "discrete", "values": valores, "freq": freq, "n": len(dados)}
+    # Todos os casos (contínuos ou discretos) usam INTERVALOS DE CLASSE
+    bins = [(i['limite_inferior'], i['limite_superior']) for i in intervalos]
+    freq = [i['frequencia'] for i in intervalos]  # F (não acumulada)
+
+    data_dict = {
+        "type": "continuous",   # força uso de amplitude no eixo X
+        "bins": bins,
+        "freq": freq,
+        "n": len(dados)
+    }
 
     hist_data = build_hist_data(data_dict, use_density=False)
     fig, ax = plt.subplots(figsize=(7, 4))
