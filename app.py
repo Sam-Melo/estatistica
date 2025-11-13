@@ -50,24 +50,47 @@ def mostrar_histograma():
         saida.insert(tk.END, "\n⚠️ Gere a tabela primeiro!\n")
         return
 
-    tabela = ultimo_tabela
-    intervalos = ultimo_intervalos
-    dados = tabela.dados
+    # Construir limites reais
+    limites = []
+    frequencias = []
+    labels = []
 
-    # Todos os casos (contínuos ou discretos) usam INTERVALOS DE CLASSE
-    bins = [(i['limite_inferior'], i['limite_superior']) for i in intervalos]
-    freq = [i['frequencia'] for i in intervalos]  # F (não acumulada)
+    for inter in ultimo_intervalos:
+        li = inter["limite_inferior"]
+        ls = inter["limite_superior"]
+        limites.append(li)
+        frequencias.append(inter["frequencia"])
+        labels.append(f"[{li} – {ls}]")
 
-    data_dict = {
-        "type": "continuous",   # força uso de amplitude no eixo X
-        "bins": bins,
-        "freq": freq,
-        "n": len(dados)
-    }
+    limites.append(ultimo_intervalos[-1]["limite_superior"])
 
-    hist_data = build_hist_data(data_dict, use_density=False)
-    fig, ax = plt.subplots(figsize=(7, 4))
-    plot_hist(ax, hist_data, title=f"Histograma ({tabela.tipo_dados})")
+    # Largura real de cada classe
+    larguras = [
+        limites[i+1] - limites[i]
+        for i in range(len(limites) - 1)
+    ]
+
+    fig, ax = plt.subplots(figsize=(9, 4))
+
+    # Barras grudadas (histograma contínuo)
+    ax.bar(
+        limites[:-1],
+        frequencias,
+        width=larguras,
+        align="edge",
+        edgecolor="black",
+        alpha=0.7
+    )
+
+    # Labels do eixo X no formato [a – b]
+    ax.set_xticks(limites[:-1])
+    ax.set_xticklabels(labels, rotation=45, ha="right")
+
+    ax.set_title("Histograma (contínuos)")
+    ax.set_xlabel("Blocos (Classes)")
+    ax.set_ylabel("Frequência Absoluta")
+
+    plt.tight_layout()
     plt.show()
 
 def mostrar_ogiva_tabela():
