@@ -32,6 +32,9 @@ def gerar_tabela():
     tabela = TabelaIntervaloClasse()
     tabela.dados = dados
 
+    # >>>>>>>>> APLICA AS CASAS DECIMAIS NO OBJETO <<<<<<<<<
+    tabela.casas_decimais = int(spin_decimais.get())
+
     tabela.definir_tipo_dados()
     estatisticas = tabela.calcular_estatisticas()
     intervalos = tabela.gerar_intervalos()
@@ -45,14 +48,18 @@ def gerar_tabela():
     saida.delete("1.0", tk.END)
     saida.insert(tk.END, "=== TABELA DE FREQUÊNCIAS ===\n\n")
 
-    saida.insert(tk.END, "Cls | Intervalo        | Fi | Fr(%) | Fac | Frac(%)\n")
-    saida.insert(tk.END, "----------------------------------------------------\n")
+    saida.insert(tk.END, "Cls | Intervalo              | Fi | Fr(%) | Fac | Frac(%)\n")
+    saida.insert(tk.END, "------------------------------------------------------------\n")
+
+    dec = tabela.casas_decimais
 
     for i, inter in enumerate(intervalos, 1):
 
         li = inter.get("limite_inferior")
         ls = inter.get("limite_superior")
-        intervalo_str = f"[{li} – {ls}]"
+
+        # Formatação obedecendo casas decimais
+        intervalo_str = f"[{li:.{dec}f} – {ls:.{dec}f}]"
 
         fi = inter.get("frequencia", 0)
         fr = inter.get("frequencia_relativa", 0) * 100
@@ -61,7 +68,7 @@ def gerar_tabela():
 
         saida.insert(
             tk.END,
-            f"{i:<3} | {intervalo_str:<16} | {fi:<2} | {fr:>5.1f}% | {fac:<3} | {frac:>6.1f}%\n"
+            f"{i:<3} | {intervalo_str:<20} | {fi:<3} | {fr:>6.1f}% | {fac:<3} | {frac:>7.1f}%\n"
         )
 
     # ================== ESTATÍSTICAS ===========================
@@ -133,6 +140,12 @@ header.pack(pady=10)
 # BLOCO DE ENTRADA
 frame_input = ttk.Frame(root)
 frame_input.pack(pady=5)
+
+# CASAS DECIMAIS
+ttk.Label(frame_input, text="Casas decimais:").pack(anchor="w")
+spin_decimais = ttk.Spinbox(frame_input, from_=0, to=10, width=5)
+spin_decimais.set(2)  # padrão igual ao tabela.py
+spin_decimais.pack(anchor="w", pady=3)
 
 ttk.Label(frame_input, text="Insira os dados (separados por espaço):").pack(anchor="w")
 
