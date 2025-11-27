@@ -3,8 +3,8 @@ name: Build executáveis
 on:
   push:
     branches:
-      - main      # se sua branch for outra, troca aqui
-  workflow_dispatch:
+      - main          # troque se sua branch tiver outro nome (ex: master)
+  workflow_dispatch:  # permite rodar manualmente pelo GitHub
 
 jobs:
   build:
@@ -23,15 +23,18 @@ jobs:
           python-version: '3.11'
 
       - name: Instalar dependências
+        shell: bash
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install pyinstaller
 
       - name: Gerar executável
+        shell: bash
         run: |
           pyinstaller --onefile --windowed src/app.py --name TabelaComVariancia
-          # se o principal for tabela.py em vez de src/app.py, troca a linha acima
+          # se o principal for tabela.py, use em vez disso:
+          # pyinstaller --onefile --windowed tabela.py --name TabelaComVariancia
 
       - name: Publicar artefatos
         uses: actions/upload-artifact@v4
