@@ -17,6 +17,7 @@ def gerar_tabela():
     global ultimo_tabela, ultimo_intervalos
 
     texto = entrada.get("1.0", tk.END).strip()
+    titulo = titulo_entry.get().strip()
 
     if not texto:
         saida.delete("1.0", tk.END)
@@ -32,10 +33,9 @@ def gerar_tabela():
     tabela = TabelaIntervaloClasse()
     tabela.dados = dados
 
-    # >>>>>>>>> APLICA AS CASAS DECIMAIS NO OBJETO <<<<<<<<<
     tabela.casas_decimais = int(spin_decimais.get())
-
     tabela.definir_tipo_dados()
+
     estatisticas = tabela.calcular_estatisticas()
     intervalos = tabela.gerar_intervalos()
     intervalos = tabela.calcular_frequencias(intervalos)
@@ -46,20 +46,17 @@ def gerar_tabela():
     # ================== EXIBIR TABELA =========================
 
     saida.delete("1.0", tk.END)
-    saida.insert(tk.END, "=== TABELA DE FREQUÊNCIAS ===\n\n")
+
+    # título opcional – se o usuário não digitar, não mostra
+    if titulo:
+        saida.insert(tk.END, titulo + "\n")
+        saida.insert(tk.END, "=" * len(titulo) + "\n\n")
 
     saida.insert(tk.END, "Cls | Intervalo              | Fi | Fr(%) | Fac | Frac(%)\n")
     saida.insert(tk.END, "------------------------------------------------------------\n")
 
-    dec = tabela.casas_decimais
-
     for i, inter in enumerate(intervalos, 1):
-
-        li = inter.get("limite_inferior")
-        ls = inter.get("limite_superior")
-
-        # Formatação obedecendo casas decimais
-        intervalo_str = f"[{li:.{dec}f} – {ls:.{dec}f}]"
+        intervalo_str = inter['intervalo']
 
         fi = inter.get("frequencia", 0)
         fr = inter.get("frequencia_relativa", 0) * 100
@@ -73,29 +70,37 @@ def gerar_tabela():
 
     # ================== ESTATÍSTICAS ===========================
 
+    dec = tabela.casas_decimais
     saida.insert(tk.END, "\n=== ESTATÍSTICAS ===\n")
     saida.insert(tk.END, f"Total de dados (n): {len(tabela.dados)}\n")
 
+    minimo = estatisticas['min']
+    maximo = estatisticas['max']
+    amp_total = estatisticas['amplitude_total']
+    k = estatisticas['k']
+    amp_classe = estatisticas['amplitude_classe']
+
+    saida.insert(tk.END, f"Valor mínimo: {minimo:.{dec}f}\n")
+    saida.insert(tk.END, f"Valor máximo: {maximo:.{dec}f}\n")
+    saida.insert(tk.END, f"Amplitude total: {amp_total:.{dec}f}\n")
+    saida.insert(tk.END, f"Número de classes (k): {k}\n")
+    saida.insert(
+        tk.END,
+        f"Amplitude de classe (A): ({maximo:.{dec}f} - {minimo:.{dec}f}) / {k} = {amp_classe:.{dec}f}\n"
+    )
+
     if "media" in estatisticas:
         saida.insert(tk.END, f"Média: {estatisticas['media']:.4f}\n")
-
     if "mediana" in estatisticas:
         saida.insert(tk.END, f"Mediana: {estatisticas['mediana']:.4f}\n")
-
     if "moda" in estatisticas and estatisticas["moda"] is not None:
         saida.insert(tk.END, f"Moda: {estatisticas['moda']}\n")
-
     if "variancia" in estatisticas:
         saida.insert(tk.END, f"Variância: {estatisticas['variancia']:.4f}\n")
-
     if "desvio_padrao" in estatisticas:
         saida.insert(tk.END, f"Desvio padrão: {estatisticas['desvio_padrao']:.4f}\n")
-
     if "cv" in estatisticas:
         saida.insert(tk.END, f"Coeficiente de variação: {estatisticas['cv']:.2f}%\n")
-
-    if "amplitude_total" in estatisticas:
-        saida.insert(tk.END, f"Amplitude total: {estatisticas['amplitude_total']}\n")
 
     saida.insert(tk.END, f"Tipo do conjunto: {tabela.tipo_dados}\n")
 
@@ -105,7 +110,11 @@ def mostrar_histograma():
         saida.insert(tk.END, "\n⚠️ Gere a tabela primeiro!\n")
         return
 
-    plot_hist(ultimo_intervalos)
+    titulo = titulo_entry.get().strip()
+    if not titulo:
+        titulo = "Histograma"
+
+    plot_hist(ultimo_intervalos, title=titulo)
 
 
 def mostrar_ogiva_tabela():
@@ -113,20 +122,38 @@ def mostrar_ogiva_tabela():
         saida.insert(tk.END, "\n⚠️ Gere a tabela primeiro!\n")
         return
 
+    titulo = titulo_entry.get().strip()
+    if not titulo:
+        titulo = "Ogiva"
+
     intervalos_xy = [(i['limite_inferior'], i['limite_superior']) for i in ultimo_intervalos]
     freq = [i["frequencia"] for i in ultimo_intervalos]
 
-    ogiva_de_tabela_agrupada(intervalos_xy, freq, mostrar_percentual=True)
+    ogiva_de_tabela_agrupada(intervalos_xy, freq, mostrar_percentual=True, titulo=titulo)
+
+
+def mostrar_participantes():
+    nomes = (
+        "Matheus\n"
+        "Samuel\n"
+        "Gabriel\n"
+        "Maria Eduarda\n"
+        "Raphael\n"
+        "Júlia\n"
+        "Luciano\n"
+        "Carlos\n"
+        "Estavão"
+    )
+    messagebox.showinfo("Participantes", "Desenvolvido pelo grupo:\n\n" + nomes)
 
 
 # ===================== INTERFACE (UI) ===============================
 
 root = tk.Tk()
 root.title("📊 Analisador Estatístico – Tabelas, Histogramas e Ogivas")
-root.geometry("900x600")
+root.geometry("900x650")
 root.configure(bg="#eef2f7")
 
-# TEMA MODERNO
 style = ttk.Style()
 style.theme_use("clam")
 style.configure("TButton", padding=6, font=("Segoe UI", 10, "bold"))
@@ -141,14 +168,16 @@ header.pack(pady=10)
 frame_input = ttk.Frame(root)
 frame_input.pack(pady=5)
 
-# CASAS DECIMAIS
 ttk.Label(frame_input, text="Casas decimais:").pack(anchor="w")
 spin_decimais = ttk.Spinbox(frame_input, from_=0, to=10, width=5)
-spin_decimais.set(2)  # padrão igual ao tabela.py
+spin_decimais.set(2)
 spin_decimais.pack(anchor="w", pady=3)
 
-ttk.Label(frame_input, text="Insira os dados (separados por espaço):").pack(anchor="w")
+ttk.Label(frame_input, text="Título da tabela/gráficos (opcional):").pack(anchor="w")
+titulo_entry = ttk.Entry(frame_input, width=50)
+titulo_entry.pack(anchor="w", pady=3)
 
+ttk.Label(frame_input, text="Insira os dados (separados por espaço):").pack(anchor="w")
 entrada = scrolledtext.ScrolledText(frame_input, width=70, height=4, font=("Consolas", 10))
 entrada.pack(pady=4)
 
@@ -159,9 +188,20 @@ frame_btn.pack(pady=10)
 ttk.Button(frame_btn, text="Gerar Tabela", command=gerar_tabela).grid(row=0, column=0, padx=8)
 ttk.Button(frame_btn, text="Histograma", command=mostrar_histograma).grid(row=0, column=1, padx=8)
 ttk.Button(frame_btn, text="Ogiva", command=mostrar_ogiva_tabela).grid(row=0, column=2, padx=8)
+ttk.Button(frame_btn, text="Participantes", command=mostrar_participantes).grid(row=0, column=3, padx=8)
 
-# ÁREA DE RESULTADO
+# RESULTADO
 saida = scrolledtext.ScrolledText(root, width=100, height=22, font=("Consolas", 10))
 saida.pack(pady=10)
+
+# CRÉDITOS FIXOS NO RODAPÉ
+creditos = ttk.Label(
+    root,
+    text="Desenvolvido pelo grupo: Matheus, Samuel, Gabriel, Maria Eduarda, Raphael, Júlia, Luciano, Carlos, Estavão",
+    style="TLabel",
+    wraplength=850,
+    justify="center"
+)
+creditos.pack(pady=5)
 
 root.mainloop()
