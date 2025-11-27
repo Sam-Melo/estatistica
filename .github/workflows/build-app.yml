@@ -2,7 +2,8 @@ name: Build executáveis
 
 on:
   push:
-    branches: [ main ]      # troca se sua branch for master
+    branches:
+      - main      # se sua branch for outra, troca aqui
   workflow_dispatch:
 
 jobs:
@@ -29,7 +30,8 @@ jobs:
 
       - name: Gerar executável
         run: |
-          pyinstaller --onefile --windowed tabela.py --name TabelaComVariancia
+          pyinstaller --onefile --windowed src/app.py --name TabelaComVariancia
+          # se o principal for tabela.py em vez de src/app.py, troca a linha acima
 
       - name: Publicar artefatos
         uses: actions/upload-artifact@v4
